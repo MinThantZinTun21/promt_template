@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import { PromptBrowser } from "@/components/PromptBrowser";
 import { Icon } from "@/components/ui/Icon";
 import { TypeGlyph } from "@/components/ui/TypeGlyph";
-import { currentUser } from "@/lib/auth";
 import { countsByType } from "@/lib/prompts";
 import { parseBrowseParams, type RawSearchParams } from "@/lib/search-params";
 import { PROMPT_TYPES, getPromptType } from "@/lib/taxonomy";
@@ -45,7 +44,6 @@ export default async function TypePage({
 
   const raw = await searchParams;
   const browseParams = parseBrowseParams(raw);
-  const user = await currentUser();
   const counts = countsByType();
 
   const index = PROMPT_TYPES.findIndex((item) => item.id === type.id);
@@ -69,7 +67,7 @@ export default async function TypePage({
           <h1 className="text-title-1 text-label">{type.name}</h1>
           <p className="mt-1.5 max-w-2xl text-body text-label-secondary">{type.description}</p>
           <p className="mt-3 text-footnote text-label-tertiary">
-            {pluralize(counts[type.id] ?? 0, "published prompt")} · also known as{" "}
+            {pluralize(counts[type.id] ?? 0, "public prompt")} · also known as{" "}
             {type.keywords.slice(0, 3).join(", ")}
           </p>
         </div>
@@ -78,7 +76,6 @@ export default async function TypePage({
       <PromptBrowser
         pathname={`/types/${type.id}`}
         params={browseParams}
-        user={user}
         lockedType={type.id}
       />
 

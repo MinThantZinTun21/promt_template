@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { recordCopyAction } from "@/app/actions/prompts";
 import { Icon } from "@/components/ui/Icon";
 import { useToast } from "@/components/ui/Toast";
 import { cx } from "@/lib/utils";
@@ -32,7 +31,6 @@ async function writeToClipboard(text: string): Promise<boolean> {
 
 export function CopyButton({
   text,
-  promptId,
   label = "Copy prompt",
   copiedLabel = "Copied",
   variant = "filled",
@@ -65,14 +63,6 @@ export function CopyButton({
     toast.show(copiedLabel === "Copied" ? "Copied to clipboard" : copiedLabel, {
       tone: "success",
     });
-
-    if (promptId) {
-      try {
-        await recordCopyAction(promptId);
-      } catch {
-        // A failed counter update should never block the copy.
-      }
-    }
   };
 
   const variants = {

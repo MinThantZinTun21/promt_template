@@ -10,7 +10,7 @@ export default function NotFound() {
 
       <h1 className="text-title-1 text-label">Not on the shelf</h1>
       <p className="mt-2 text-body text-label-secondary">
-        That page, prompt, or profile does not exist — or it is private and not visible to you.
+        That page or prompt does not exist. Private drafts live only in the browser that created them.
       </p>
 
       <div className="mt-7 flex flex-wrap justify-center gap-2">

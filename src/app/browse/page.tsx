@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
 import { PromptBrowser } from "@/components/PromptBrowser";
-import { currentUser } from "@/lib/auth";
 import { parseBrowseParams, type RawSearchParams } from "@/lib/search-params";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +18,6 @@ export default async function BrowsePage({
 }) {
   const raw = await searchParams;
   const params = parseBrowseParams(raw);
-  const user = await currentUser();
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -30,7 +28,7 @@ export default async function BrowsePage({
         </p>
       </header>
 
-      <PromptBrowser pathname="/browse" params={params} user={user} />
+      <PromptBrowser pathname="/browse" params={params} />
     </div>
   );
 }

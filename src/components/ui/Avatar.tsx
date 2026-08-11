@@ -16,19 +16,19 @@ const TINTS: AccentColor[] = [
   "yellow",
 ];
 
-/** Monogram avatar with a deterministic system-color tint per person. */
+/** Monogram avatar with a deterministic system-color tint per name. */
 export function Avatar({
   name,
-  handle,
+  seed,
   size = 32,
   className,
 }: {
   name: string;
-  handle: string;
+  seed?: string;
   size?: number;
   className?: string;
 }) {
-  const tint = ACCENT_VAR[TINTS[hashToIndex(handle, TINTS.length)]];
+  const tint = ACCENT_VAR[TINTS[hashToIndex(seed || name, TINTS.length)]];
 
   return (
     <span
@@ -44,7 +44,7 @@ export function Avatar({
         background: `linear-gradient(160deg, ${tint}, color-mix(in srgb, ${tint} 62%, black))`,
       }}
     >
-      {initials(name || handle)}
+      {initials(name || seed || "?")}
     </span>
   );
 }

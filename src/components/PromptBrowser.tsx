@@ -12,7 +12,6 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { EmptyState } from "@/components/ui/Surface";
-import type { User } from "@/lib/users";
 import { countsByCategory, countsByType, searchPrompts, topTags } from "@/lib/prompts";
 import { buildBrowseHref, type BrowseParams } from "@/lib/search-params";
 import { SORT_OPTIONS, getCategory, getPromptType } from "@/lib/taxonomy";
@@ -21,15 +20,12 @@ import { pluralize } from "@/lib/utils";
 export function PromptBrowser({
   pathname,
   params,
-  user,
   lockedType,
 }: {
   pathname: string;
   params: BrowseParams;
-  user: User | null;
   lockedType?: string;
 }) {
-  const viewerId = user?.id ?? null;
   const type = lockedType ?? params.type;
 
   const filters = {
@@ -38,7 +34,6 @@ export function PromptBrowser({
     category: params.category || undefined,
     tag: params.tag || undefined,
     model: params.model || undefined,
-    statuses: ["published" as const],
   };
 
   const results = searchPrompts({
@@ -46,7 +41,6 @@ export function PromptBrowser({
     sort: params.sort,
     page: params.page,
     perPage: 24,
-    viewerId,
   });
 
   const typeCounts = countsByType(filters);
@@ -102,7 +96,7 @@ export function PromptBrowser({
 
         <div className="mb-4 mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
           <p className="text-footnote text-label-secondary">
-            {results.total === 0 ? "No prompts" : pluralize(results.total, "prompt")}
+            {results.total === 0 ? "No public prompts" : pluralize(results.total, "public prompt")}
             {params.q && (
               <>
                 {" for "}
@@ -150,11 +144,11 @@ export function PromptBrowser({
         {results.prompts.length === 0 ? (
           <EmptyState
             icon="magnifier"
-            title={params.q ? `Nothing matches “${params.q}”` : "No prompts here yet"}
+            title={params.q ? `Nothing matches “${params.q}”` : "No public prompts here yet"}
             message={
               params.q
                 ? "Try a shorter query, a single keyword, or clear the filters to widen the search."
-                : "This corner of the shelf is empty. Be the first to add a prompt here."
+                : "This corner of the public shelf is empty. You can still keep a private draft on this device."
             }
             action={
               params.q || params.category || params.tag || params.model ? (
@@ -181,7 +175,7 @@ export function PromptBrowser({
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
             {results.prompts.map((prompt) => (
               <li key={prompt.id} className="flex">
-                <PromptCard prompt={prompt} signedIn={Boolean(user)} className="w-full" />
+                <PromptCard prompt={prompt} className="w-full" />
               </li>
             ))}
           </ul>

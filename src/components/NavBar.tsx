@@ -2,16 +2,10 @@ import Link from "next/link";
 
 import { CommandPalette } from "@/components/CommandPalette";
 import { NavLinks } from "@/components/NavLinks";
-import { UserMenu } from "@/components/UserMenu";
 import { ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { currentUser } from "@/lib/auth";
-import { countPendingReview } from "@/lib/prompts";
 
-export async function NavBar() {
-  const user = await currentUser();
-  const pendingCount = user?.role === "admin" ? countPendingReview() : 0;
-
+export function NavBar() {
   return (
     <header className="material-chrome hairline-b sticky top-0 z-70">
       <div className="mx-auto flex h-[var(--nav-height)] max-w-6xl items-center gap-3 px-4 sm:px-6">
@@ -37,29 +31,9 @@ export async function NavBar() {
         <div className="ml-auto flex items-center gap-2">
           <CommandPalette />
 
-          <ButtonLink
-            href="/new"
-            size="sm"
-            variant="filled"
-            icon="plus"
-            pill
-            className="hidden sm:inline-flex"
-          >
+          <ButtonLink href="/new" size="sm" variant="filled" icon="plus" pill>
             Add prompt
           </ButtonLink>
-
-          {user ? (
-            <UserMenu
-              name={user.name}
-              handle={user.handle}
-              role={user.role}
-              pendingCount={pendingCount}
-            />
-          ) : (
-            <ButtonLink href="/signin" size="sm" variant="gray" pill>
-              Sign in
-            </ButtonLink>
-          )}
         </div>
       </div>
     </header>

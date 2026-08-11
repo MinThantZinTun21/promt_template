@@ -2,24 +2,10 @@ import Link from "next/link";
 
 import { Icon } from "@/components/ui/Icon";
 import { ThemeControl } from "@/components/ui/ThemeControl";
-import { currentUser } from "@/lib/auth";
 import { PROMPT_TYPES } from "@/lib/taxonomy";
 
-export async function SiteFooter() {
-  const user = await currentUser();
+export function SiteFooter() {
   const highlights = PROMPT_TYPES.slice(0, 6);
-
-  const accountLinks = user
-    ? [
-        { href: "/new", label: "Add a prompt" },
-        { href: "/library", label: "My library" },
-        { href: `/u/${user.handle}`, label: "My profile" },
-      ]
-    : [
-        { href: "/new", label: "Add a prompt" },
-        { href: "/signin", label: "Sign in" },
-        { href: "/signup", label: "Create account" },
-      ];
 
   return (
     <footer className="hairline-t mt-16 bg-canvas">
@@ -40,14 +26,14 @@ export async function SiteFooter() {
             </div>
             <p className="mt-3 text-footnote text-label-secondary">
               A public library of prompt templates, organised by prompt type so you can find the
-              shape you need and fill in the blanks.
+              shape you need and fill in the blanks. Favorites and drafts stay in this browser.
             </p>
             <div className="mt-4">
               <ThemeControl />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-8">
             <nav aria-label="Library">
               <h2 className="text-caption-1 font-semibold uppercase tracking-[0.06em] text-label-tertiary">
                 Library
@@ -73,6 +59,11 @@ export async function SiteFooter() {
                     Most used
                   </Link>
                 </li>
+                <li>
+                  <Link href="/library" className="text-label-secondary hover:text-label">
+                    My library
+                  </Link>
+                </li>
               </ul>
             </nav>
 
@@ -94,26 +85,12 @@ export async function SiteFooter() {
               </ul>
             </nav>
 
-            <nav aria-label="Account">
-              <h2 className="text-caption-1 font-semibold uppercase tracking-[0.06em] text-label-tertiary">
-                Account
-              </h2>
-              <ul className="mt-3 flex flex-col gap-2 text-footnote">
-                {accountLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link href={link.href} className="text-label-secondary hover:text-label">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
           </div>
         </div>
 
         <p className="mt-10 text-caption-1 text-label-tertiary">
-          Prompts are contributed by the community and reviewed before they appear in the public
-          library.
+          The public shelf is read-only. Favorites, forks, and new drafts are stored locally in
+          this browser — no account, no shared edits.
         </p>
       </div>
     </footer>

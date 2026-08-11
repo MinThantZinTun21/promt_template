@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 import { SearchField } from "@/components/ui/SearchField";
 import { TypeGlyph } from "@/components/ui/TypeGlyph";
+import { searchPersonalPrompts } from "@/lib/personal-store";
 import { PROMPT_TYPES, getPromptType } from "@/lib/taxonomy";
 import { cx } from "@/lib/utils";
 
@@ -18,7 +19,7 @@ type Hit = {
 };
 
 type Item = {
-  kind: "prompt" | "type" | "action";
+  kind: "prompt" | "personal" | "type" | "action";
   id: string;
   title: string;
   subtitle: string;
@@ -29,8 +30,8 @@ type Item = {
 const ACTIONS: Item[] = [
   { kind: "action", id: "browse", title: "Browse all prompts", subtitle: "Every published prompt", href: "/browse" },
   { kind: "action", id: "types", title: "Prompt types", subtitle: `All ${PROMPT_TYPES.length} types`, href: "/types" },
-  { kind: "action", id: "new", title: "Add a prompt", subtitle: "Contribute to the library", href: "/new" },
-  { kind: "action", id: "library", title: "My library", subtitle: "Saved and authored", href: "/library" },
+  { kind: "action", id: "new", title: "Add a prompt", subtitle: "Save a private draft in this browser", href: "/new" },
+  { kind: "action", id: "library", title: "My library", subtitle: "Private drafts and favorites", href: "/library" },
 ];
 
 /**
@@ -155,11 +156,20 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
     href: `/p/${hit.slug}`,
   }));
 
+  const personalItems: Item[] = (needle ? searchPersonalPrompts(query, 5) : []).map((prompt) => ({
+    kind: "personal" as const,
+    id: prompt.id,
+    title: prompt.title,
+    subtitle: "Private draft",
+    type: prompt.promptType,
+    href: `/p/${prompt.id}`,
+  }));
+
   const actionItems: Item[] = needle
     ? ACTIONS.filter((action) => action.title.toLowerCase().includes(needle))
     : ACTIONS.slice(0, 2);
 
-  const items = [...typeItems, ...promptItems, ...actionItems];
+  const items = [...typeItems, ...personalItems, ...promptItems, ...actionItems];
   const searchAllHref = `/browse?q=${encodeURIComponent(query.trim())}`;
 
   const go = useCallback(
@@ -263,6 +273,11 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
                       {item.kind === "type" && (
                         <span className="shrink-0 rounded-full bg-fill-tertiary px-2 py-0.5 text-caption-2 text-label-secondary">
                           Type
+                        </span>
+                      )}
+                      {item.kind === "personal" && (
+                        <span className="shrink-0 rounded-full bg-fill-tertiary px-2 py-0.5 text-caption-2 text-label-secondary">
+                          Private
                         </span>
                       )}
                       <Icon name="chevronRight" size={14} className="shrink-0 text-label-tertiary" />

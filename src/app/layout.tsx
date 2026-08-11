@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     template: "%s · PromptShelf",
   },
   description:
-    "Browse and search a public library of prompt templates organised by prompt type: system prompts, few-shot, chain of thought, extraction, agents, image and video, and more.",
+    "Browse and search an open library of prompt templates organised by prompt type. Favorites and private drafts stay in your browser.",
   applicationName: "PromptShelf",
   keywords: [
     "prompt library",
@@ -43,8 +43,8 @@ export const viewport: Viewport = {
   ],
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  await ensureSeeded();
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  ensureSeeded();
 
   return (
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>

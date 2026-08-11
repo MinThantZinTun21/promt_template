@@ -7,7 +7,6 @@ import { ButtonLink } from "@/components/ui/Button";
 import { ChipLink } from "@/components/ui/Chip";
 import { Icon } from "@/components/ui/Icon";
 import { SectionHeader } from "@/components/ui/Surface";
-import { currentUser } from "@/lib/auth";
 import { countsByType, libraryStats, searchPrompts, topTags } from "@/lib/prompts";
 import { CATEGORIES, PROMPT_TYPES } from "@/lib/taxonomy";
 import { formatCount } from "@/lib/utils";
@@ -16,14 +15,11 @@ export const dynamic = "force-dynamic";
 
 const SUGGESTIONS = ["json extraction", "code review", "chain of thought", "product photo"];
 
-export default async function HomePage() {
-  const user = await currentUser();
-  const viewerId = user?.id ?? null;
-
+export default function HomePage() {
   const stats = libraryStats();
   const typeCounts = countsByType();
-  const featured = searchPrompts({ featuredOnly: true, perPage: 6, sort: "popular", viewerId });
-  const recent = searchPrompts({ perPage: 5, sort: "recent", viewerId });
+  const featured = searchPrompts({ featuredOnly: true, perPage: 6, sort: "popular" });
+  const recent = searchPrompts({ perPage: 5, sort: "recent" });
   const tags = topTags(12);
 
   return (
@@ -50,8 +46,8 @@ export default async function HomePage() {
           </h1>
 
           <p className="mx-auto mt-4 max-w-xl text-body text-label-secondary">
-            A public library of prompt templates, filed by what the prompt does — not by vibes.
-            Search it, fill in the blanks, copy it into your tool of choice.
+            An open library of prompt templates, filed by what the prompt does — not by vibes.
+            Search it, fill in the blanks, copy it into your tool of choice. Personal drafts stay on this device.
           </p>
 
           <div className="mx-auto mt-7 max-w-xl">
@@ -106,7 +102,7 @@ export default async function HomePage() {
           />
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {featured.prompts.map((prompt) => (
-              <PromptCard key={prompt.id} prompt={prompt} signedIn={Boolean(user)} />
+              <PromptCard key={prompt.id} prompt={prompt} />
             ))}
           </div>
         </section>
@@ -169,20 +165,18 @@ export default async function HomePage() {
             <div className="min-w-0 flex-1">
               <h2 className="text-title-3 text-label">Got a prompt that earns its keep?</h2>
               <p className="mt-1 text-subheadline text-label-secondary">
-                Add it to your private shelf, or submit it to the public library. Submissions are
-                reviewed before they go live.
+                Fork a public template or write your own. New prompts stay in your private shelf on
+                this device — the public library remains the shared, seeded collection.
               </p>
             </div>
 
             <div className="flex shrink-0 gap-2">
               <ButtonLink href="/new" variant="filled" icon="plus">
-                Add a prompt
+                Add a draft
               </ButtonLink>
-              {!user && (
-                <ButtonLink href="/signup" variant="gray">
-                  Create account
-                </ButtonLink>
-              )}
+              <ButtonLink href="/browse?sort=recent" variant="gray">
+                See what&rsquo;s new
+              </ButtonLink>
             </div>
           </div>
         </section>

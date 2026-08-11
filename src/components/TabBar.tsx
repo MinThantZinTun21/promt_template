@@ -24,7 +24,7 @@ const TABS: Array<{ href: string; label: string; icon: IconName; match: (path: s
     href: "/library",
     label: "Library",
     icon: "bookmark",
-    match: (path) => path.startsWith("/library") || path.startsWith("/u/"),
+    match: (path) => path.startsWith("/library") || path.startsWith("/new"),
   },
 ];
 

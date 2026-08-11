@@ -1,18 +1,20 @@
+"use client";
+
 import Link from "next/link";
 
-import { CopyButton } from "@/components/CopyButton";
-import { Avatar } from "@/components/ui/Avatar";
+import type { PersonalPromptRecord } from "@/lib/personal-store";
+import { getCategory, getPromptType } from "@/lib/taxonomy";
+import { cx, relativeTime } from "@/lib/utils";
+import { extractVariables } from "@/lib/variables";
 import { FavoriteButton } from "@/components/FavoriteButton";
-import { ForkButton } from "@/components/ForkButton";
+import { PersonalForkButton } from "@/components/PersonalForkButton";
+import { CopyButton } from "@/components/CopyButton";
 import { Icon } from "@/components/ui/Icon";
 import { TagList } from "@/components/ui/Chip";
 import { TypeGlyph } from "@/components/ui/TypeGlyph";
-import type { Prompt } from "@/lib/prompts";
-import { getCategory, getPromptType } from "@/lib/taxonomy";
-import { cx, formatCount, relativeTime } from "@/lib/utils";
-import { extractVariables } from "@/lib/variables";
+import { Avatar } from "@/components/ui/Avatar";
 
-export function PromptCard({ prompt, className }: { prompt: Prompt; className?: string }) {
+export function PersonalPromptCard({ prompt }: { prompt: PersonalPromptRecord }) {
   const type = getPromptType(prompt.promptType);
   const category = getCategory(prompt.category);
   const variableCount = extractVariables(prompt.body).length;
@@ -23,7 +25,6 @@ export function PromptCard({ prompt, className }: { prompt: Prompt; className?: 
         "group relative flex flex-col rounded-[var(--r-xl)] border border-separator bg-card p-4",
         "transition-[transform,box-shadow,border-color] duration-[var(--duration-standard)] ease-[var(--ease-standard)]",
         "hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--label)_12%,transparent)] hover:shadow-2",
-        className,
       )}
     >
       <div className="flex items-start gap-3">
@@ -37,15 +38,17 @@ export function PromptCard({ prompt, className }: { prompt: Prompt; className?: 
             >
               {type?.name ?? prompt.promptType}
             </Link>
-            {prompt.featured && (
-              <span className="text-[var(--sys-yellow)]" title="Featured">
-                <Icon name="starFill" size={11} />
-              </span>
-            )}
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-fill-quaternary px-2 py-0.5 text-caption-2 text-label-tertiary"
+              title="Private draft"
+            >
+              <Icon name="lock" size={12} />
+              Draft
+            </span>
           </div>
 
           <h3 className="mt-0.5 truncate-2 text-headline leading-snug text-label">
-            <Link href={`/p/${prompt.slug}`} className="hover:underline">
+            <Link href={`/p/${prompt.id}`} className="hover:underline">
               <span className="absolute inset-0 rounded-[var(--r-xl)]" aria-hidden="true" />
               {prompt.title}
             </Link>
@@ -53,8 +56,8 @@ export function PromptCard({ prompt, className }: { prompt: Prompt; className?: 
         </div>
 
         <div className="relative z-10 flex shrink-0 items-center gap-1">
-          <FavoriteButton favoriteKey={`public:${prompt.slug}`} />
-          <ForkButton prompt={prompt} withLabel={false} />
+          <FavoriteButton favoriteKey={`personal:${prompt.id}`} />
+          <PersonalForkButton prompt={prompt} withLabel={false} />
         </div>
       </div>
 
@@ -87,53 +90,14 @@ export function PromptCard({ prompt, className }: { prompt: Prompt; className?: 
           <Avatar name={prompt.contributor} size={18} />
           <span className="truncate">{prompt.contributor}</span>
         </span>
-
-        <span className="text-label-quaternary">·</span>
-        <span className="shrink-0 text-caption-1 text-label-tertiary">
-          {relativeTime(prompt.createdAt)}
+        <span className="ml-auto shrink-0 text-caption-1 text-label-tertiary">
+          {relativeTime(prompt.updatedAt)}
         </span>
-
-        <div className="ml-auto flex shrink-0 items-center gap-2.5">
-          <span
-            className="flex items-center gap-1 text-caption-1 tabular-nums text-label-tertiary"
-            title={`${prompt.copies} copies`}
-          >
-            <Icon name="copy" size={12} strokeWidth={1.9} />
-            {formatCount(prompt.copies)}
-          </span>
-          <span className="relative z-10">
-            <CopyButton
-              text={prompt.body}
-              promptId={prompt.id}
-              variant="gray"
-              size="sm"
-              iconOnly
-              label="Copy prompt"
-            />
-          </span>
-        </div>
+        <span className="ml-2 relative z-10">
+          <CopyButton text={prompt.body} variant="gray" size="sm" iconOnly label="Copy prompt" />
+        </span>
       </div>
     </article>
   );
 }
 
-/** Dense one-line variant for sidebars and related lists. */
-export function PromptRow({ prompt }: { prompt: Prompt }) {
-  const type = getPromptType(prompt.promptType);
-
-  return (
-    <Link
-      href={`/p/${prompt.slug}`}
-      className="flex items-center gap-3 px-4 py-3 transition-colors not-last:hairline-b hover:bg-fill-quaternary"
-    >
-      {type && <TypeGlyph icon={type.icon} accent={type.accent} size={32} />}
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-subheadline font-medium text-label">{prompt.title}</span>
-        <span className="block truncate text-caption-1 text-label-secondary">
-          {type?.name} · {formatCount(prompt.copies)} copies
-        </span>
-      </span>
-      <Icon name="chevronRight" size={15} className="shrink-0 text-label-tertiary" />
-    </Link>
-  );
-}

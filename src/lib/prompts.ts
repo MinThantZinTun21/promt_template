@@ -1,16 +1,10 @@
 import "server-only";
 
-import { execute, queryAll, queryOne, transaction } from "@/lib/db";
+import { execute, queryAll, queryOne } from "@/lib/db";
 import { getPromptType, type SortId } from "@/lib/taxonomy";
-import { newId, nowIso, parseJsonArray, slugify } from "@/lib/utils";
+import { parseJsonArray } from "@/lib/utils";
 
-export type PromptStatus = "private" | "pending" | "published" | "rejected";
-
-export type PromptAuthor = {
-  id: string;
-  handle: string;
-  name: string;
-};
+export const ANONYMOUS = "Anonymous";
 
 export type Prompt = {
   id: string;
@@ -23,19 +17,16 @@ export type Prompt = {
   category: string;
   tags: string[];
   models: string[];
-  status: PromptStatus;
-  author: PromptAuthor | null;
+  contributor: string;
   forkedFromId: string | null;
   forkedFrom: { slug: string; title: string } | null;
   featured: boolean;
   views: number;
   copies: number;
-  saves: number;
-  reviewNote: string;
+  likes: number;
+  editCount: number;
   createdAt: string;
   updatedAt: string;
-  publishedAt: string | null;
-  isFavorite: boolean;
 };
 
 type PromptRow = {
@@ -49,39 +40,29 @@ type PromptRow = {
   category: string;
   tags: string;
   models: string;
-  status: string;
-  author_id: string | null;
-  author_handle: string | null;
-  author_name: string | null;
+  contributor: string;
   forked_from_id: string | null;
   forked_from_slug: string | null;
   forked_from_title: string | null;
   featured: number;
   views: number;
   copies: number;
-  saves: number;
-  review_note: string;
+  likes: number;
+  edit_count: number;
   created_at: string;
   updated_at: string;
-  published_at: string | null;
-  is_favorite: number;
 };
 
 const SELECT_COLUMNS = /* sql */ `
   p.id, p.slug, p.title, p.summary, p.body, p.usage_notes, p.prompt_type, p.category,
-  p.tags, p.models, p.status, p.author_id, p.forked_from_id, p.featured, p.views,
-  p.copies, p.saves, p.review_note, p.created_at, p.updated_at, p.published_at,
-  u.handle AS author_handle,
-  u.name   AS author_name,
+  p.tags, p.models, p.contributor, p.forked_from_id, p.featured, p.views, p.copies,
+  p.likes, p.edit_count, p.created_at, p.updated_at,
   fp.slug  AS forked_from_slug,
-  fp.title AS forked_from_title,
-  CASE WHEN fav.user_id IS NULL THEN 0 ELSE 1 END AS is_favorite
+  fp.title AS forked_from_title
 `;
 
 const JOINS = /* sql */ `
-  LEFT JOIN users     u  ON u.id  = p.author_id
-  LEFT JOIN prompts   fp ON fp.id = p.forked_from_id
-  LEFT JOIN favorites fav ON fav.prompt_id = p.id AND fav.user_id = ?
+  LEFT JOIN prompts fp ON fp.id = p.forked_from_id
 `;
 
 function mapPrompt(row: PromptRow): Prompt {
@@ -96,11 +77,7 @@ function mapPrompt(row: PromptRow): Prompt {
     category: row.category,
     tags: parseJsonArray(row.tags),
     models: parseJsonArray(row.models),
-    status: row.status as PromptStatus,
-    author:
-      row.author_id && row.author_handle
-        ? { id: row.author_id, handle: row.author_handle, name: row.author_name ?? row.author_handle }
-        : null,
+    contributor: row.contributor || ANONYMOUS,
     forkedFromId: row.forked_from_id,
     forkedFrom:
       row.forked_from_id && row.forked_from_slug
@@ -109,12 +86,10 @@ function mapPrompt(row: PromptRow): Prompt {
     featured: row.featured === 1,
     views: row.views,
     copies: row.copies,
-    saves: row.saves,
-    reviewNote: row.review_note,
+    likes: row.likes,
+    editCount: row.edit_count,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    publishedAt: row.published_at,
-    isFavorite: row.is_favorite === 1,
   };
 }
 
@@ -143,39 +118,24 @@ export type SearchFilters = {
   category?: string;
   tag?: string;
   model?: string;
-  authorId?: string;
-  favoritedBy?: string;
+  contributor?: string;
   featuredOnly?: boolean;
-  statuses?: PromptStatus[];
 };
 
 export type SearchOptions = SearchFilters & {
   sort?: SortId;
   page?: number;
   perPage?: number;
-  viewerId?: string | null;
 };
 
 type WhereParts = {
   clauses: string[];
   whereParams: unknown[];
-  joinSql: string[];
-  joinParams: unknown[];
 };
 
 function buildFilters(filters: SearchFilters, skip?: "type" | "category"): WhereParts {
   const clauses: string[] = [];
   const params: unknown[] = [];
-  const extraJoins: string[] = [];
-  const joinParams: unknown[] = [];
-
-  const statuses = filters.statuses ?? ["published"];
-  if (statuses.length === 0) {
-    clauses.push("0 = 1");
-  } else {
-    clauses.push(`p.status IN (${statuses.map(() => "?").join(", ")})`);
-    params.push(...statuses);
-  }
 
   if (filters.type && skip !== "type") {
     clauses.push("p.prompt_type = ?");
@@ -202,21 +162,16 @@ function buildFilters(filters: SearchFilters, skip?: "type" | "category"): Where
     params.push(filters.model);
   }
 
-  if (filters.authorId) {
-    clauses.push("p.author_id = ?");
-    params.push(filters.authorId);
+  if (filters.contributor) {
+    clauses.push("p.contributor = ? COLLATE NOCASE");
+    params.push(filters.contributor);
   }
 
   if (filters.featuredOnly) {
     clauses.push("p.featured = 1");
   }
 
-  if (filters.favoritedBy) {
-    extraJoins.push("JOIN favorites saved ON saved.prompt_id = p.id AND saved.user_id = ?");
-    joinParams.push(filters.favoritedBy);
-  }
-
-  return { clauses, whereParams: params, joinSql: extraJoins, joinParams };
+  return { clauses, whereParams: params };
 }
 
 /**
@@ -242,16 +197,16 @@ function ftsJoinFor(input: string | undefined, withRank: boolean) {
 function orderBy(sort: SortId, hasQuery: boolean): string {
   switch (sort) {
     case "recent":
-      return "COALESCE(p.published_at, p.created_at) DESC, p.title ASC";
+      return "p.created_at DESC, p.title ASC";
     case "popular":
-      return "(p.copies * 3 + p.saves * 4 + p.views) DESC, COALESCE(p.published_at, p.created_at) DESC";
+      return "(p.copies * 3 + p.likes * 4 + p.views) DESC, p.created_at DESC";
     case "alpha":
       return "p.title COLLATE NOCASE ASC";
     case "relevance":
     default:
       return hasQuery
         ? "f.rank ASC, p.copies DESC"
-        : "p.featured DESC, (p.copies * 3 + p.saves * 4 + p.views) DESC, COALESCE(p.published_at, p.created_at) DESC";
+        : "p.featured DESC, (p.copies * 3 + p.likes * 4 + p.views) DESC, p.created_at DESC";
   }
 }
 
@@ -266,39 +221,35 @@ export type SearchResult = {
 export function searchPrompts(options: SearchOptions = {}): SearchResult {
   const perPage = Math.min(Math.max(options.perPage ?? 24, 1), 60);
   const page = Math.max(options.page ?? 1, 1);
-  const viewerId = options.viewerId ?? null;
 
   const fts = ftsJoinFor(options.q, true);
   const hasQuery = fts.active;
   const sort = options.sort ?? "relevance";
 
-  const { clauses, whereParams, joinSql, joinParams } = buildFilters(options);
+  const { clauses, whereParams } = buildFilters(options);
   const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
 
-  // Parameters bind in SQL text order: favorite-flag join, filter joins, FTS, WHERE.
   const rows = queryAll<PromptRow>(
     /* sql */ `
       SELECT ${SELECT_COLUMNS}
       FROM prompts p
       ${JOINS}
-      ${joinSql.join("\n")}
       ${fts.sql}
       ${where}
       ORDER BY ${orderBy(sort, hasQuery)}
       LIMIT ? OFFSET ?
     `,
-    [viewerId, ...joinParams, ...fts.params, ...whereParams, perPage, (page - 1) * perPage],
+    [...fts.params, ...whereParams, perPage, (page - 1) * perPage],
   );
 
   const totalRow = queryOne<{ total: number }>(
     /* sql */ `
       SELECT COUNT(*) AS total
       FROM prompts p
-      ${joinSql.join("\n")}
       ${fts.sql}
       ${where}
     `,
-    [...joinParams, ...fts.params, ...whereParams],
+    [...fts.params, ...whereParams],
   );
 
   const total = totalRow?.total ?? 0;
@@ -315,18 +266,17 @@ export function searchPrompts(options: SearchOptions = {}): SearchResult {
 /** Result counts per prompt type for the current query, ignoring any type filter. */
 export function countsByType(filters: SearchFilters = {}): Record<string, number> {
   const fts = ftsJoinFor(filters.q, false);
-  const { clauses, whereParams, joinSql, joinParams } = buildFilters(filters, "type");
+  const { clauses, whereParams } = buildFilters(filters, "type");
 
   const rows = queryAll<{ prompt_type: string; total: number }>(
     /* sql */ `
       SELECT p.prompt_type, COUNT(*) AS total
       FROM prompts p
-      ${joinSql.join("\n")}
       ${fts.sql}
       ${clauses.length ? `WHERE ${clauses.join(" AND ")}` : ""}
       GROUP BY p.prompt_type
     `,
-    [...joinParams, ...fts.params, ...whereParams],
+    [...fts.params, ...whereParams],
   );
 
   return Object.fromEntries(rows.map((r) => [r.prompt_type, r.total]));
@@ -335,18 +285,17 @@ export function countsByType(filters: SearchFilters = {}): Record<string, number
 /** Result counts per category for the current query, ignoring any category filter. */
 export function countsByCategory(filters: SearchFilters = {}): Record<string, number> {
   const fts = ftsJoinFor(filters.q, false);
-  const { clauses, whereParams, joinSql, joinParams } = buildFilters(filters, "category");
+  const { clauses, whereParams } = buildFilters(filters, "category");
 
   const rows = queryAll<{ category: string; total: number }>(
     /* sql */ `
       SELECT p.category, COUNT(*) AS total
       FROM prompts p
-      ${joinSql.join("\n")}
       ${fts.sql}
       ${clauses.length ? `WHERE ${clauses.join(" AND ")}` : ""}
       GROUP BY p.category
     `,
-    [...joinParams, ...fts.params, ...whereParams],
+    [...fts.params, ...whereParams],
   );
 
   return Object.fromEntries(rows.map((r) => [r.category, r.total]));
@@ -357,7 +306,6 @@ export function topTags(limit = 24): Array<{ tag: string; count: number }> {
     /* sql */ `
       SELECT json_each.value AS tag, COUNT(*) AS count
       FROM prompts p, json_each(p.tags)
-      WHERE p.status = 'published'
       GROUP BY lower(json_each.value)
       ORDER BY count DESC, tag ASC
       LIMIT ?
@@ -367,23 +315,30 @@ export function topTags(limit = 24): Array<{ tag: string; count: number }> {
 }
 
 export function libraryStats() {
-  const row = queryOne<{ prompts: number; types: number; authors: number; copies: number }>(
+  const row = queryOne<{
+    prompts: number;
+    types: number;
+    contributors: number;
+    copies: number;
+    edits: number;
+  }>(
     /* sql */ `
       SELECT
-        (SELECT COUNT(*) FROM prompts WHERE status = 'published')                       AS prompts,
-        (SELECT COUNT(DISTINCT prompt_type) FROM prompts WHERE status = 'published')    AS types,
-        (SELECT COUNT(DISTINCT author_id) FROM prompts WHERE status = 'published')      AS authors,
-        (SELECT COALESCE(SUM(copies), 0) FROM prompts WHERE status = 'published')       AS copies
+        (SELECT COUNT(*) FROM prompts)                          AS prompts,
+        (SELECT COUNT(DISTINCT prompt_type) FROM prompts)       AS types,
+        (SELECT COUNT(DISTINCT contributor) FROM prompts)       AS contributors,
+        (SELECT COALESCE(SUM(copies), 0) FROM prompts)          AS copies,
+        (SELECT COUNT(*) FROM prompt_revisions)                 AS edits
     `,
   );
-  return row ?? { prompts: 0, types: 0, authors: 0, copies: 0 };
+  return row ?? { prompts: 0, types: 0, contributors: 0, copies: 0, edits: 0 };
 }
 
 /* ------------------------------------------------------------------ */
 /* Reads                                                              */
 /* ------------------------------------------------------------------ */
 
-export function getPromptBySlug(slug: string, viewerId: string | null = null): Prompt | undefined {
+export function getPromptBySlug(slug: string): Prompt | undefined {
   const row = queryOne<PromptRow>(
     /* sql */ `
       SELECT ${SELECT_COLUMNS}
@@ -392,12 +347,12 @@ export function getPromptBySlug(slug: string, viewerId: string | null = null): P
       WHERE p.slug = ?
       LIMIT 1
     `,
-    [viewerId, slug],
+    [slug],
   );
   return row ? mapPrompt(row) : undefined;
 }
 
-export function getPromptById(id: string, viewerId: string | null = null): Prompt | undefined {
+export function getPromptById(id: string): Prompt | undefined {
   const row = queryOne<PromptRow>(
     /* sql */ `
       SELECT ${SELECT_COLUMNS}
@@ -406,58 +361,29 @@ export function getPromptById(id: string, viewerId: string | null = null): Promp
       WHERE p.id = ?
       LIMIT 1
     `,
-    [viewerId, id],
+    [id],
   );
   return row ? mapPrompt(row) : undefined;
 }
 
-export function relatedPrompts(prompt: Prompt, viewerId: string | null = null, limit = 4): Prompt[] {
+export function relatedPrompts(prompt: Prompt, limit = 4): Prompt[] {
   const rows = queryAll<PromptRow>(
     /* sql */ `
       SELECT ${SELECT_COLUMNS}
       FROM prompts p
       ${JOINS}
-      WHERE p.status = 'published'
-        AND p.id != ?
+      WHERE p.id != ?
         AND (p.prompt_type = ? OR p.category = ?)
-      ORDER BY (p.prompt_type = ?) DESC, (p.copies * 3 + p.saves * 4 + p.views) DESC
+      ORDER BY (p.prompt_type = ?) DESC, (p.copies * 3 + p.likes * 4 + p.views) DESC
       LIMIT ?
     `,
-    [viewerId, prompt.id, prompt.promptType, prompt.category, prompt.promptType, limit],
+    [prompt.id, prompt.promptType, prompt.category, prompt.promptType, limit],
   );
   return rows.map(mapPrompt);
 }
 
-export function countPendingReview(): number {
-  return (
-    queryOne<{ total: number }>("SELECT COUNT(*) AS total FROM prompts WHERE status = 'pending'")
-      ?.total ?? 0
-  );
-}
-
-export function authorStats(authorId: string) {
-  const row = queryOne<{ published: number; drafts: number; copies: number; saves: number }>(
-    /* sql */ `
-      SELECT
-        SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) AS published,
-        SUM(CASE WHEN status IN ('private', 'pending', 'rejected') THEN 1 ELSE 0 END) AS drafts,
-        COALESCE(SUM(copies), 0) AS copies,
-        COALESCE(SUM(saves), 0)  AS saves
-      FROM prompts
-      WHERE author_id = ?
-    `,
-    [authorId],
-  );
-  return {
-    published: row?.published ?? 0,
-    drafts: row?.drafts ?? 0,
-    copies: row?.copies ?? 0,
-    saves: row?.saves ?? 0,
-  };
-}
-
 /* ------------------------------------------------------------------ */
-/* Writes                                                             */
+/* Seed-time FTS writes                                               */
 /* ------------------------------------------------------------------ */
 
 function ftsKeywords(input: {
@@ -465,6 +391,7 @@ function ftsKeywords(input: {
   category: string;
   tags: string[];
   models: string[];
+  contributor?: string;
 }): string {
   const type = getPromptType(input.promptType);
   return [
@@ -474,6 +401,7 @@ function ftsKeywords(input: {
     input.category,
     ...input.tags,
     ...input.models,
+    input.contributor ?? "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -489,6 +417,7 @@ function writeFtsRow(prompt: {
   category: string;
   tags: string[];
   models: string[];
+  contributor?: string;
 }) {
   execute("DELETE FROM prompts_fts WHERE prompt_id = ?", [prompt.id]);
   execute(
@@ -514,8 +443,12 @@ export function reindexPrompt(id: string) {
     category: string;
     tags: string;
     models: string;
+    contributor: string;
   }>(
-    "SELECT id, title, summary, body, usage_notes, prompt_type, category, tags, models FROM prompts WHERE id = ?",
+    /* sql */ `
+      SELECT id, title, summary, body, usage_notes, prompt_type, category, tags, models, contributor
+      FROM prompts WHERE id = ?
+    `,
     [id],
   );
   if (!row) return;
@@ -530,185 +463,6 @@ export function reindexPrompt(id: string) {
     category: row.category,
     tags: parseJsonArray(row.tags),
     models: parseJsonArray(row.models),
+    contributor: row.contributor,
   });
-}
-
-function uniqueSlug(title: string, ignoreId?: string): string {
-  const base = slugify(title) || "prompt";
-  let candidate = base;
-  let suffix = 2;
-
-  for (;;) {
-    const clash = queryOne<{ id: string }>("SELECT id FROM prompts WHERE slug = ? LIMIT 1", [
-      candidate,
-    ]);
-    if (!clash || clash.id === ignoreId) return candidate;
-    candidate = `${base}-${suffix}`;
-    suffix += 1;
-  }
-}
-
-export type PromptInput = {
-  title: string;
-  summary: string;
-  body: string;
-  usageNotes: string;
-  promptType: string;
-  category: string;
-  tags: string[];
-  models: string[];
-  status: PromptStatus;
-};
-
-export function createPrompt(
-  input: PromptInput & { authorId: string | null; forkedFromId?: string | null; featured?: boolean },
-): Prompt {
-  const id = newId("pr");
-  const slug = uniqueSlug(input.title);
-  const timestamp = nowIso();
-
-  transaction(() => {
-    execute(
-      /* sql */ `
-        INSERT INTO prompts (
-          id, slug, title, summary, body, usage_notes, prompt_type, category, tags, models,
-          status, author_id, forked_from_id, featured, created_at, updated_at, published_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `,
-      [
-        id,
-        slug,
-        input.title,
-        input.summary,
-        input.body,
-        input.usageNotes,
-        input.promptType,
-        input.category,
-        JSON.stringify(input.tags),
-        JSON.stringify(input.models),
-        input.status,
-        input.authorId,
-        input.forkedFromId ?? null,
-        input.featured ? 1 : 0,
-        timestamp,
-        timestamp,
-        input.status === "published" ? timestamp : null,
-      ],
-    );
-    writeFtsRow({ ...input, id });
-  });
-
-  return getPromptById(id)!;
-}
-
-export function updatePrompt(id: string, input: PromptInput): Prompt | undefined {
-  const existing = queryOne<{ slug: string; title: string; status: string; published_at: string | null }>(
-    "SELECT slug, title, status, published_at FROM prompts WHERE id = ?",
-    [id],
-  );
-  if (!existing) return undefined;
-
-  const slug = existing.title === input.title ? existing.slug : uniqueSlug(input.title, id);
-  const publishedAt =
-    input.status === "published" ? (existing.published_at ?? nowIso()) : existing.published_at;
-
-  transaction(() => {
-    execute(
-      /* sql */ `
-        UPDATE prompts SET
-          slug = ?, title = ?, summary = ?, body = ?, usage_notes = ?, prompt_type = ?,
-          category = ?, tags = ?, models = ?, status = ?, updated_at = ?, published_at = ?
-        WHERE id = ?
-      `,
-      [
-        slug,
-        input.title,
-        input.summary,
-        input.body,
-        input.usageNotes,
-        input.promptType,
-        input.category,
-        JSON.stringify(input.tags),
-        JSON.stringify(input.models),
-        input.status,
-        nowIso(),
-        publishedAt,
-        id,
-      ],
-    );
-    writeFtsRow({ ...input, id });
-  });
-
-  return getPromptById(id);
-}
-
-export function deletePrompt(id: string) {
-  transaction(() => {
-    execute("DELETE FROM prompts_fts WHERE prompt_id = ?", [id]);
-    execute("DELETE FROM prompts WHERE id = ?", [id]);
-  });
-}
-
-export function setPromptStatus(id: string, status: PromptStatus, reviewNote = "") {
-  execute(
-    /* sql */ `
-      UPDATE prompts
-      SET status = ?,
-          review_note = ?,
-          updated_at = ?,
-          published_at = CASE WHEN ? = 'published' AND published_at IS NULL THEN ? ELSE published_at END
-      WHERE id = ?
-    `,
-    [status, reviewNote, nowIso(), status, nowIso(), id],
-  );
-}
-
-export function setPromptFeatured(id: string, featured: boolean) {
-  execute("UPDATE prompts SET featured = ?, updated_at = ? WHERE id = ?", [
-    featured ? 1 : 0,
-    nowIso(),
-    id,
-  ]);
-}
-
-export function incrementViews(id: string) {
-  execute("UPDATE prompts SET views = views + 1 WHERE id = ?", [id]);
-}
-
-export function incrementCopies(id: string) {
-  execute("UPDATE prompts SET copies = copies + 1 WHERE id = ?", [id]);
-}
-
-export function toggleFavorite(userId: string, promptId: string): boolean {
-  const existing = queryOne<{ prompt_id: string }>(
-    "SELECT prompt_id FROM favorites WHERE user_id = ? AND prompt_id = ?",
-    [userId, promptId],
-  );
-
-  if (existing) {
-    transaction(() => {
-      execute("DELETE FROM favorites WHERE user_id = ? AND prompt_id = ?", [userId, promptId]);
-      execute("UPDATE prompts SET saves = MAX(saves - 1, 0) WHERE id = ?", [promptId]);
-    });
-    return false;
-  }
-
-  transaction(() => {
-    execute("INSERT INTO favorites (user_id, prompt_id, created_at) VALUES (?, ?, ?)", [
-      userId,
-      promptId,
-      nowIso(),
-    ]);
-    execute("UPDATE prompts SET saves = saves + 1 WHERE id = ?", [promptId]);
-  });
-  return true;
-}
-
-export function isFavorited(userId: string, promptId: string): boolean {
-  return Boolean(
-    queryOne("SELECT 1 AS ok FROM favorites WHERE user_id = ? AND prompt_id = ?", [
-      userId,
-      promptId,
-    ]),
-  );
 }

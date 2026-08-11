@@ -1,61 +1,18 @@
 import type { CategoryId, PromptTypeId } from "@/lib/taxonomy";
 
-export type SeedUser = {
-  key: string;
-  name: string;
-  handle: string;
-  email: string;
-  bio: string;
-  role?: "member" | "admin";
+/**
+ * Credits on the starter library. With no accounts these are plain display
+ * names, not identities — exactly what a visitor types into the contributor
+ * field when they add a prompt.
+ */
+export const SEED_CONTRIBUTORS: Record<string, string> = {
+  team: "PromptShelf Team",
+  maya: "Maya Chen",
+  adaeze: "Adaeze Okonkwo",
+  lucas: "Lucas Ferreira",
+  sana: "Sana Iqbal",
+  tomas: "Tomas Nowak",
 };
-
-export const SEED_PASSWORD = "promptshelf";
-
-export const SEED_USERS: SeedUser[] = [
-  {
-    key: "team",
-    name: "PromptShelf Team",
-    handle: "promptshelf",
-    email: "team@promptshelf.app",
-    bio: "We curate the starter library and review community submissions.",
-    role: "admin",
-  },
-  {
-    key: "maya",
-    name: "Maya Chen",
-    handle: "mayachen",
-    email: "maya@promptshelf.app",
-    bio: "Staff engineer. Writes prompts the way she writes tests: specific and boring on purpose.",
-  },
-  {
-    key: "adaeze",
-    name: "Adaeze Okonkwo",
-    handle: "adaeze",
-    email: "adaeze@promptshelf.app",
-    bio: "Support operations lead. Obsessed with triage accuracy and clean escalation paths.",
-  },
-  {
-    key: "lucas",
-    name: "Lucas Ferreira",
-    handle: "lucasf",
-    email: "lucas@promptshelf.app",
-    bio: "Content designer. Believes tone is a spec, not a vibe.",
-  },
-  {
-    key: "sana",
-    name: "Sana Iqbal",
-    handle: "sanaiqbal",
-    email: "sana@promptshelf.app",
-    bio: "Data scientist. Turns dashboards into decisions.",
-  },
-  {
-    key: "tomas",
-    name: "Tomas Nowak",
-    handle: "tomasn",
-    email: "tomas@promptshelf.app",
-    bio: "Art director working mostly with generative image and video tools.",
-  },
-];
 
 export type SeedPrompt = {
   title: string;
@@ -70,7 +27,7 @@ export type SeedPrompt = {
   featured?: boolean;
   views: number;
   copies: number;
-  saves: number;
+  likes: number;
 };
 
 export const SEED_PROMPTS: SeedPrompt[] = [
@@ -100,7 +57,7 @@ Non-negotiable constraints: {{constraints | no new dependencies}}`,
     featured: true,
     views: 4820,
     copies: 1290,
-    saves: 612,
+    likes: 612,
   },
   {
     title: "Support agent with hard escalation rules",
@@ -129,7 +86,7 @@ Always end by restating what happens next in one sentence.`,
     author: "adaeze",
     views: 2140,
     copies: 688,
-    saves: 301,
+    likes: 301,
   },
   {
     title: "Explain any concept in one paragraph",
@@ -153,7 +110,7 @@ Requirements:
     featured: true,
     views: 6310,
     copies: 2044,
-    saves: 918,
+    likes: 918,
   },
   {
     title: "Meeting notes into decisions and owners",
@@ -186,7 +143,7 @@ Notes:
     author: "team",
     views: 3890,
     copies: 1502,
-    saves: 640,
+    likes: 640,
   },
   {
     title: "Socratic tutor that refuses to answer",
@@ -213,7 +170,7 @@ Start by asking what they already believe about: {{topic}}`,
     author: "lucas",
     views: 2760,
     copies: 795,
-    saves: 460,
+    likes: 460,
   },
   {
     title: "Skeptical staff engineer design review",
@@ -244,7 +201,7 @@ Design:
     featured: true,
     views: 3410,
     copies: 1105,
-    saves: 702,
+    likes: 702,
   },
   {
     title: "Few-shot category normalizer",
@@ -285,7 +242,7 @@ Output:`,
     author: "sana",
     views: 1980,
     copies: 742,
-    saves: 288,
+    likes: 288,
   },
   {
     title: "Brand voice rewriter from samples",
@@ -318,7 +275,7 @@ Rewrite the following. Keep every factual claim intact and preserve any {{preser
     author: "lucas",
     views: 3120,
     copies: 1188,
-    saves: 534,
+    likes: 534,
   },
   {
     title: "Reason step by step, then commit",
@@ -348,7 +305,7 @@ Problem:
     featured: true,
     views: 5240,
     copies: 1877,
-    saves: 903,
+    likes: 903,
   },
   {
     title: "Root cause ladder for an incident",
@@ -380,7 +337,7 @@ Incident:
     author: "maya",
     views: 1740,
     copies: 566,
-    saves: 312,
+    likes: 312,
   },
   {
     title: "Paper to plain-English brief",
@@ -410,7 +367,7 @@ Paper:
     author: "sana",
     views: 2980,
     copies: 1012,
-    saves: 588,
+    likes: 588,
   },
   {
     title: "Long thread to executive summary",
@@ -439,7 +396,7 @@ Thread:
     author: "team",
     views: 4110,
     copies: 1461,
-    saves: 622,
+    likes: 622,
   },
   {
     title: "Tone and reading-level rewriter",
@@ -469,7 +426,7 @@ Return the rewrite, then a line "Changed:" listing anything whose meaning you we
     author: "lucas",
     views: 3660,
     copies: 1340,
-    saves: 501,
+    likes: 501,
   },
   {
     title: "Cut a page of copy in half",
@@ -500,7 +457,7 @@ Output the cut version, then "Removed claims:" listing anything you dropped that
     author: "lucas",
     views: 2290,
     copies: 848,
-    saves: 371,
+    likes: 371,
   },
   {
     title: "Document to strict JSON",
@@ -543,7 +500,7 @@ Document:
     featured: true,
     views: 5680,
     copies: 2310,
-    saves: 1044,
+    likes: 1044,
   },
   {
     title: "Support ticket field extractor",
@@ -578,7 +535,7 @@ Message:
     author: "adaeze",
     views: 1860,
     copies: 704,
-    saves: 289,
+    likes: 289,
   },
   {
     title: "Ticket triage classifier",
@@ -615,7 +572,7 @@ Ticket:
     featured: true,
     views: 3240,
     copies: 1224,
-    saves: 498,
+    likes: 498,
   },
   {
     title: "Inbound lead intent classifier",
@@ -648,7 +605,7 @@ Message:
     author: "team",
     views: 1420,
     copies: 462,
-    saves: 208,
+    likes: 208,
   },
   {
     title: "Translation with formality control",
@@ -679,7 +636,7 @@ Output the translation, then a short section "Translator notes:" listing any phr
     author: "lucas",
     views: 2110,
     copies: 786,
-    saves: 342,
+    likes: 342,
   },
   {
     title: "UI string translator with a length budget",
@@ -712,7 +669,7 @@ Strings:
     author: "maya",
     views: 1180,
     copies: 398,
-    saves: 187,
+    likes: 187,
   },
   {
     title: "Twenty angles on one feature",
@@ -739,7 +696,7 @@ What the feature actually does: {{feature_description}}`,
     author: "lucas",
     views: 2470,
     copies: 880,
-    saves: 407,
+    likes: 407,
   },
   {
     title: "Product naming sprint",
@@ -772,7 +729,7 @@ Rules: no name over 12 characters. No double letters at word boundaries. Skip an
     author: "team",
     views: 1930,
     copies: 611,
-    saves: 344,
+    likes: 344,
   },
   {
     title: "Typed API client from an endpoint spec",
@@ -807,7 +764,7 @@ Spec:
     author: "maya",
     views: 3520,
     copies: 1290,
-    saves: 611,
+    likes: 611,
   },
   {
     title: "SQL from a plain-English question",
@@ -841,7 +798,7 @@ Output the query, then "Assumptions:" as a short list, then one sentence on what
     featured: true,
     views: 4780,
     copies: 1902,
-    saves: 830,
+    likes: 830,
   },
   {
     title: "Pull request review by severity",
@@ -875,7 +832,7 @@ Diff:
     featured: true,
     views: 4310,
     copies: 1655,
-    saves: 902,
+    likes: 902,
   },
   {
     title: "Stack trace to root cause",
@@ -908,7 +865,7 @@ Error and trace:
     author: "maya",
     views: 3980,
     copies: 1503,
-    saves: 727,
+    likes: 727,
   },
   {
     title: "Grounded answer with citations",
@@ -940,7 +897,7 @@ Sources:
     featured: true,
     views: 6120,
     copies: 2488,
-    saves: 1210,
+    likes: 1210,
   },
   {
     title: "Answer from the help center only",
@@ -978,7 +935,7 @@ Articles:
     author: "adaeze",
     views: 2260,
     copies: 812,
-    saves: 356,
+    likes: 356,
   },
   {
     title: "Tool-using agent with stop conditions",
@@ -1016,7 +973,7 @@ Success criteria: {{success_criteria}}`,
     featured: true,
     views: 5410,
     copies: 2005,
-    saves: 1132,
+    likes: 1132,
   },
   {
     title: "Plan first, then execute research",
@@ -1053,7 +1010,7 @@ Depth: {{depth | thorough but time-boxed}}`,
     author: "sana",
     views: 2140,
     copies: 723,
-    saves: 418,
+    likes: 418,
   },
   {
     title: "Product hero shot",
@@ -1084,7 +1041,7 @@ Avoid: extra props, visible logos other than the product's, text, watermarks, ha
     featured: true,
     views: 4920,
     copies: 1788,
-    saves: 951,
+    likes: 951,
   },
   {
     title: "Flat vector icon set",
@@ -1110,7 +1067,7 @@ Avoid: text, labels, outlines around cells, drop shadows, perspective, varying s
     author: "tomas",
     views: 2680,
     copies: 944,
-    saves: 502,
+    likes: 502,
   },
   {
     title: "Cinematic product b-roll",
@@ -1137,7 +1094,7 @@ Avoid: cuts, transitions, text or titles, people entering frame, morphing geomet
     author: "tomas",
     views: 3140,
     copies: 1066,
-    saves: 588,
+    likes: 588,
   },
   {
     title: "Explainer storyboard, shot by shot",
@@ -1173,7 +1130,7 @@ Script:
     author: "tomas",
     views: 1720,
     copies: 540,
-    saves: 274,
+    likes: 274,
   },
   {
     title: "Explain a metric movement",
@@ -1205,7 +1162,7 @@ Data:
     featured: true,
     views: 3860,
     copies: 1344,
-    saves: 706,
+    likes: 706,
   },
   {
     title: "Cohort retention read",
@@ -1236,7 +1193,7 @@ Retention table:
     author: "sana",
     views: 1560,
     copies: 498,
-    saves: 271,
+    likes: 271,
   },
   {
     title: "Rubric grader for model output",
@@ -1280,7 +1237,7 @@ Judge only what is present. Do not reward what you assume the author intended.`,
     author: "team",
     views: 2840,
     copies: 986,
-    saves: 604,
+    likes: 604,
   },
   {
     title: "Essay feedback against a rubric",
@@ -1313,7 +1270,7 @@ Essay:
     author: "lucas",
     views: 1980,
     copies: 622,
-    saves: 358,
+    likes: 358,
   },
   {
     title: "Prompt critic and rewriter",
@@ -1349,7 +1306,7 @@ Original prompt:
     featured: true,
     views: 5960,
     copies: 2211,
-    saves: 1348,
+    likes: 1348,
   },
   {
     title: "Vague request into a written spec",
@@ -1379,7 +1336,7 @@ Rough request: {{request}}`,
     author: "maya",
     views: 3280,
     copies: 1176,
-    saves: 742,
+    likes: 742,
   },
   {
     title: "Weekly review coach",
@@ -1409,7 +1366,7 @@ Rules: no motivational language, no praise for effort alone. If my priorities ex
     author: "team",
     views: 2410,
     copies: 890,
-    saves: 512,
+    likes: 512,
   },
   {
     title: "Lecture to study notes",
@@ -1441,7 +1398,7 @@ Transcript:
     author: "lucas",
     views: 2680,
     copies: 1014,
-    saves: 476,
+    likes: 476,
   },
   {
     title: "Negotiation rehearsal partner",
@@ -1473,6 +1430,6 @@ Begin with your opening line. Nothing else.`,
     author: "team",
     views: 1840,
     copies: 604,
-    saves: 388,
+    likes: 388,
   },
 ];
