@@ -1432,4 +1432,482 @@ Begin with your opening line. Nothing else.`,
     copies: 604,
     likes: 388,
   },
+
+  // One short starter per type — the smallest useful prompt of that shape.
+  {
+    title: "Simple system prompt",
+    summary: "A short system message: who you are, what you do, and what you refuse.",
+    body: `You are {{role | a helpful assistant}}.
+
+Do:
+- Answer the user's request directly
+- Ask one clarifying question if a required detail is missing
+- Admit when you do not know
+
+Do not:
+- Invent facts, quotes, or sources
+- {{forbidden | give legal, medical, or financial advice}}
+
+Keep replies under {{length | 200 words}} unless the user asks for more.`,
+    usageNotes: "Put this in the system slot. Leave the user message for the actual task.",
+    promptType: "system-prompt",
+    category: "writing",
+    tags: ["simple", "starter", "system"],
+    models: ["Any model"],
+    author: "team",
+    views: 420,
+    copies: 180,
+    likes: 64,
+  },
+  {
+    title: "Simple instruction",
+    summary: "One task, one output shape, no examples.",
+    body: `Do this task: {{task | write a 3-sentence product description}}
+
+Context: {{context | a stainless-steel water bottle}}
+Audience: {{audience | busy shoppers}}
+Output: {{output | three sentences, no heading}}
+
+If anything required is missing, ask one question instead of guessing.`,
+    usageNotes: "Swap the three variables and send. That is the whole prompt.",
+    promptType: "instruction",
+    category: "writing",
+    tags: ["simple", "starter", "zero-shot"],
+    models: ["Any model"],
+    author: "team",
+    views: 390,
+    copies: 156,
+    likes: 52,
+  },
+  {
+    title: "Simple persona",
+    summary: "Answer as one named role, in that person's voice.",
+    body: `Answer as {{role | a patient high-school physics teacher}}.
+
+Voice: {{voice | clear, encouraging, no jargon unless you define it}}
+Audience: {{audience | a student who is stuck}}
+
+Stay in character. If the question is outside this role, say so in character and stop.
+
+Question:
+{{question}}`,
+    usageNotes: "One role, one voice line, then the question. Do not stack extra personas.",
+    promptType: "persona",
+    category: "education",
+    tags: ["simple", "starter", "role"],
+    models: ["Any model"],
+    author: "lucas",
+    views: 310,
+    copies: 128,
+    likes: 44,
+  },
+  {
+    title: "Simple few-shot",
+    summary: "Two examples, then a new input. The model copies the pattern.",
+    body: `Rewrite each input in the same style as the examples.
+
+Example 1
+Input: {{ex1_in | The meeting is postponed.}}
+Output: {{ex1_out | Meeting moved. New time TBA.}}
+
+Example 2
+Input: {{ex2_in | Please find the report attached.}}
+Output: {{ex2_out | Report attached.}}
+
+Now do this one:
+Input: {{input}}
+Output:`,
+    usageNotes: "Keep the examples short and consistent. Two is enough for a simple pattern.",
+    promptType: "few-shot",
+    category: "writing",
+    tags: ["simple", "starter", "examples"],
+    models: ["Any model"],
+    author: "maya",
+    views: 280,
+    copies: 112,
+    likes: 38,
+  },
+  {
+    title: "Simple chain of thought",
+    summary: "Think in numbered steps, then give a one-line answer.",
+    body: `Solve this. Show your work.
+
+Problem: {{problem}}
+
+Write:
+1. What is being asked
+2. The facts you will use
+3. The steps, numbered
+4. A final answer on its own line, starting with "Answer:"
+
+If a step is uncertain, say so and continue with the best assumption.`,
+    usageNotes: "Works for word problems, estimates, and any question with more than one step.",
+    promptType: "chain-of-thought",
+    category: "education",
+    tags: ["simple", "starter", "reasoning"],
+    models: ["Any model"],
+    author: "team",
+    views: 350,
+    copies: 140,
+    likes: 48,
+  },
+  {
+    title: "Simple summary",
+    summary: "Turn a long text into a short recap of a chosen length.",
+    body: `Summarize the text below in {{length | 5 bullet points}}.
+
+Audience: {{audience | a busy teammate}}
+Keep: facts, decisions, and next steps
+Drop: greetings, repetition, and filler
+
+Text:
+"""
+{{text}}
+"""`,
+    usageNotes: "Paste any email, article, or notes. Change the length variable if you want a paragraph instead.",
+    promptType: "summarization",
+    category: "writing",
+    tags: ["simple", "starter", "tldr"],
+    models: ["Any model"],
+    author: "sana",
+    views: 410,
+    copies: 172,
+    likes: 58,
+  },
+  {
+    title: "Simple rewrite",
+    summary: "Same meaning, new tone or length.",
+    body: `Rewrite the text. Keep the meaning. Change only the form.
+
+Tone: {{tone | clearer and more direct}}
+Length: {{length | about the same}}
+Audience: {{audience | a colleague}}
+
+Do not add new facts.
+
+Text:
+"""
+{{text}}
+"""`,
+    usageNotes: "Use this for emails, docs, and chat drafts you already wrote.",
+    promptType: "rewriting",
+    category: "writing",
+    tags: ["simple", "starter", "edit"],
+    models: ["Any model"],
+    author: "lucas",
+    views: 360,
+    copies: 148,
+    likes: 50,
+  },
+  {
+    title: "Simple extractor",
+    summary: "Pull a few named fields out of text and return JSON.",
+    body: `Extract these fields from the text. Return JSON only. No markdown.
+
+Fields:
+- {{field_1 | name}}
+- {{field_2 | date}}
+- {{field_3 | amount}}
+
+If a field is missing, use null. Do not guess.
+
+Text:
+"""
+{{text}}
+"""`,
+    usageNotes: "Rename the three fields to whatever you need. Add more lines if you need more fields.",
+    promptType: "extraction",
+    category: "data",
+    tags: ["simple", "starter", "json"],
+    models: ["Any model"],
+    author: "sana",
+    views: 330,
+    copies: 134,
+    likes: 46,
+  },
+  {
+    title: "Simple classifier",
+    summary: "Pick one label from a short list, or unknown.",
+    body: `Classify the text into exactly one label.
+
+Labels: {{labels | bug, feature, question, other}}
+
+Reply with JSON only:
+{"label": "...", "reason": "one short sentence"}
+
+If none fit, use "other". Do not invent a new label.
+
+Text:
+"""
+{{text}}
+"""`,
+    usageNotes: "Put your own labels in the list. Keep the set small so the model does not waffle.",
+    promptType: "classification",
+    category: "support",
+    tags: ["simple", "starter", "label"],
+    models: ["Any model"],
+    author: "tomas",
+    views: 270,
+    copies: 108,
+    likes: 36,
+  },
+  {
+    title: "Simple translation",
+    summary: "Translate into one language and keep names as they are.",
+    body: `Translate into {{target_language | Spanish}}.
+
+Keep product names, people, and URLs unchanged.
+Formality: {{formality | everyday}}
+If a phrase has no natural equivalent, keep it in the source language and mark it with [ ].
+
+Text:
+"""
+{{text}}
+"""`,
+    usageNotes: "One target language per run. For a second language, run it again.",
+    promptType: "translation",
+    category: "writing",
+    tags: ["simple", "starter", "i18n"],
+    models: ["Any model"],
+    author: "adaeze",
+    views: 250,
+    copies: 96,
+    likes: 32,
+  },
+  {
+    title: "Simple brainstorm",
+    summary: "Ten distinct ideas under one constraint.",
+    body: `Give me {{count | 10}} ideas for {{topic | a weekend workshop name}}.
+
+Constraint: {{constraint | must be 2–4 words, no puns}}
+Make each idea different in kind, not just wording.
+Number them. No extra commentary.`,
+    usageNotes: "Raise the count only if you still need more after the first batch.",
+    promptType: "brainstorming",
+    category: "marketing",
+    tags: ["simple", "starter", "ideas"],
+    models: ["Any model"],
+    author: "maya",
+    views: 300,
+    copies: 120,
+    likes: 40,
+  },
+  {
+    title: "Simple code write",
+    summary: "Write one function in a stated language, with a short example.",
+    body: `Write {{language | TypeScript}} code that does this: {{task | parse a YYYY-MM-DD string into a Date}}
+
+Rules:
+- One function, named {{name | parseDate}}
+- No extra dependencies
+- Include a 3-line usage example in a comment
+- If the input is invalid, {{on_error | throw a clear Error}}
+
+Return only the code.`,
+    usageNotes: "Keep the task to one function. Bigger jobs belong in a longer code-generation prompt.",
+    promptType: "code-generation",
+    category: "engineering",
+    tags: ["simple", "starter", "code"],
+    models: ["Any model"],
+    author: "maya",
+    views: 380,
+    copies: 160,
+    likes: 54,
+  },
+  {
+    title: "Simple code review",
+    summary: "List issues in a snippet, worst first.",
+    body: `Review this {{language | TypeScript}} snippet.
+
+Report only real problems, worst first. For each:
+- Severity: blocker / should-fix / nit
+- What is wrong, in one sentence
+- A suggested fix, in one sentence
+
+If nothing is wrong, say so in one line.
+
+Code:
+"""
+{{code}}
+"""`,
+    usageNotes: "Paste a function or a small diff. Not a whole repository.",
+    promptType: "code-review",
+    category: "engineering",
+    tags: ["simple", "starter", "review"],
+    models: ["Any model"],
+    author: "tomas",
+    views: 340,
+    copies: 136,
+    likes: 48,
+  },
+  {
+    title: "Simple document Q&A",
+    summary: "Answer only from the pasted text, or say the text does not say.",
+    body: `Answer the question using only the source below.
+
+If the source does not contain the answer, reply exactly: "The source does not say."
+Quote the phrase you used, in quotation marks.
+
+Question: {{question}}
+
+Source:
+"""
+{{source}}
+"""`,
+    usageNotes: "Paste the paragraph or page you want answers from. Do not mix in other context.",
+    promptType: "rag-qa",
+    category: "research",
+    tags: ["simple", "starter", "rag"],
+    models: ["Any model"],
+    author: "team",
+    views: 320,
+    copies: 130,
+    likes: 44,
+  },
+  {
+    title: "Simple tool-using agent",
+    summary: "When to call a tool, when to stop, and what “done” means.",
+    body: `You may use these tools: {{tools | search, fetch_url}}
+
+Goal: {{goal | find the official docs URL for the library}}
+
+Loop:
+1. Decide whether you need a tool
+2. Call at most one tool per turn
+3. Use the result; do not invent what a tool would have returned
+4. Stop when you can state the answer, or after {{max_steps | 4}} steps
+
+When done, reply with:
+Answer: …
+Sources: …`,
+    usageNotes: "Replace the tool list with the tools your app actually exposes.",
+    promptType: "agent-tooling",
+    category: "engineering",
+    tags: ["simple", "starter", "agent"],
+    models: ["Any model"],
+    author: "maya",
+    views: 290,
+    copies: 118,
+    likes: 42,
+  },
+  {
+    title: "Simple image prompt",
+    summary: "Subject, setting, light, and what to leave out.",
+    body: `{{subject | a red bicycle parked by a bakery window}}, {{setting | quiet cobblestone street at golden hour}}
+
+Style: {{style | documentary photograph}}
+Light: {{light | warm low sun, soft shadows}}
+Framing: {{framing | medium shot, eye level}}
+Avoid: {{avoid | text, logos, extra people, distortion}}`,
+    usageNotes: "Paste into an image model as-is. Tweak one variable at a time.",
+    promptType: "image-prompt",
+    category: "design",
+    tags: ["simple", "starter", "image"],
+    models: ["Midjourney", "Any model"],
+    author: "adaeze",
+    views: 260,
+    copies: 104,
+    likes: 36,
+  },
+  {
+    title: "Simple video prompt",
+    summary: "One shot: subject, camera move, and duration.",
+    body: `One shot, {{duration | 4 seconds}}.
+
+Subject: {{subject | a paper boat in a rain gutter}}
+Action: {{action | it turns a corner and speeds up}}
+Camera: {{camera | tracking alongside, handheld, slight shake}}
+Look: {{look | overcast, natural color, no slow motion}}
+Audio: {{audio | rain and distant traffic only}}
+Avoid: {{avoid | cuts, text, faces}}`,
+    usageNotes: "Keep it to a single shot. Multi-shot stories need the longer video prompt.",
+    promptType: "video-prompt",
+    category: "design",
+    tags: ["simple", "starter", "video"],
+    models: ["Sora", "Veo", "Any model"],
+    author: "adaeze",
+    views: 220,
+    copies: 88,
+    likes: 30,
+  },
+  {
+    title: "Simple data read",
+    summary: "Say what the numbers show, then one cautious next step.",
+    body: `Look at this data.
+
+Question: {{question | what changed week over week?}}
+
+Write:
+1. Observations — only what the numbers show
+2. What you cannot tell from this data
+3. One next step, marked as a suggestion
+
+Data:
+"""
+{{data}}
+"""`,
+    usageNotes: "Paste a small table or a few metrics. Do not ask it to invent missing rows.",
+    promptType: "analysis",
+    category: "data",
+    tags: ["simple", "starter", "metrics"],
+    models: ["Any model"],
+    author: "sana",
+    views: 240,
+    copies: 92,
+    likes: 34,
+  },
+  {
+    title: "Simple rubric grade",
+    summary: "Score a piece of work against three criteria.",
+    body: `Grade the work below.
+
+Criteria (1–5 each):
+1. {{c1 | clarity}}
+2. {{c2 | completeness}}
+3. {{c3 | correctness}}
+
+For each criterion: score, then one sentence why.
+Then a total out of 15 and one concrete improvement.
+
+Work:
+"""
+{{work}}
+"""`,
+    usageNotes: "Rename the three criteria. Add more only if you will actually use the extra scores.",
+    promptType: "evaluation",
+    category: "education",
+    tags: ["simple", "starter", "rubric"],
+    models: ["Any model"],
+    author: "lucas",
+    views: 230,
+    copies: 90,
+    likes: 32,
+  },
+  {
+    title: "Simple prompt fixer",
+    summary: "Rewrite a weak prompt so it is specific and testable.",
+    body: `Improve this prompt.
+
+Goal of the prompt: {{goal | get a usable first draft}}
+What went wrong: {{problem | answers were vague}}
+
+Return:
+1. A rewritten prompt, ready to paste
+2. Three changes you made, in one line each
+3. One test input to try next
+
+Original prompt:
+"""
+{{prompt}}
+"""`,
+    usageNotes: "Paste the prompt that failed. The 'what went wrong' line is the useful part — do not skip it.",
+    promptType: "meta-prompt",
+    category: "writing",
+    tags: ["simple", "starter", "prompt engineering"],
+    models: ["Any model"],
+    author: "team",
+    views: 310,
+    copies: 126,
+    likes: 46,
+  },
 ];

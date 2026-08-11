@@ -5,7 +5,7 @@ import { reindexPrompt } from "@/lib/prompts";
 import { SEED_CONTRIBUTORS, SEED_PROMPTS, type SeedPrompt } from "@/lib/seed-data";
 import { newId, nowIso, slugify } from "@/lib/utils";
 
-const SEED_VERSION = "2";
+const SEED_VERSION = "3";
 
 function insertSeedPrompt(prompt: SeedPrompt, createdAt: string) {
   const id = newId("pr");
@@ -49,6 +49,12 @@ function insertSeedPrompt(prompt: SeedPrompt, createdAt: string) {
 }
 
 function seed() {
+  // The public library is regenerated from seed-data.ts whenever the version
+  // changes. Personal drafts live in the browser, so wiping SQLite is safe.
+  execute("DELETE FROM prompts_fts");
+  execute("DELETE FROM prompt_revisions");
+  execute("DELETE FROM prompts");
+
   // Spread creation dates across the past few months so date sorting is meaningful.
   const dayMs = 86_400_000;
   const start = Date.now() - SEED_PROMPTS.length * 2 * dayMs;
