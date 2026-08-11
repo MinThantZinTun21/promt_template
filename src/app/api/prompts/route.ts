@@ -1,8 +1,11 @@
 import { getPromptBySlug } from "@/lib/prompts";
+import { ensureSeeded } from "@/lib/seed";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  ensureSeeded();
+
   const { searchParams } = new URL(request.url);
   const slugs = (searchParams.get("slugs") ?? "")
     .split(",")
